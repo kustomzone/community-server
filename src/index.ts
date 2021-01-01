@@ -190,6 +190,7 @@ export * from './util/locking/WrappedExpiringResourceLocker';
 
 // Util
 export * from './util/AsyncHandler';
+export * from './util/FaviconHandler';
 export * from './util/HeaderUtil';
 export * from './util/PathUtil';
 export * from './util/QuadUtil';
