@@ -1,10 +1,12 @@
 import type { Server } from 'http';
+import { types } from 'util';
 import type { Express } from 'express';
 import express from 'express';
 import { getLoggerFor } from '../logging/LogUtil';
 import { guardStream } from '../util/GuardedStream';
 import type { HttpHandler } from './HttpHandler';
 import type { HttpServerFactory } from './HttpServerFactory';
+import isNativeError = types.isNativeError;
 
 export class ExpressHttpServerFactory implements HttpServerFactory {
   protected readonly logger = getLoggerFor(this);
@@ -26,7 +28,7 @@ export class ExpressHttpServerFactory implements HttpServerFactory {
         this.logger.info(`Received request for ${request.url}`);
         await this.handler.handleSafe({ request: guardStream(request), response });
       } catch (error: unknown) {
-        const errMsg = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : 'Unknown error.';
+        const errMsg = isNativeError(error) ? `${error.name}: ${error.message}\n${error.stack}` : 'Unknown error.';
         this.logger.error(errMsg);
         if (response.headersSent) {
           response.end();

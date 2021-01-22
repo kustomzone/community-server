@@ -1,3 +1,4 @@
+import { types } from 'util';
 import arrayifyStream from 'arrayify-stream';
 import { DataFactory } from 'n3';
 import type { Quad, Term } from 'rdf-js';
@@ -25,6 +26,7 @@ import { generateResourceQuads } from '../util/ResourceUtil';
 import { CONTENT_TYPE, DC, HTTP, LDP, POSIX, PIM, RDF, VANN, XSD } from '../util/Vocabularies';
 import type { DataAccessor } from './accessors/DataAccessor';
 import type { ResourceStore } from './ResourceStore';
+import isNativeError = types.isNativeError;
 
 /**
  * ResourceStore which uses a DataAccessor for backend access.
@@ -194,7 +196,7 @@ export class DataAccessorBasedStore implements ResourceStore {
     try {
       return await this.accessor.getMetadata(identifier);
     } catch (error: unknown) {
-      if (error instanceof NotFoundHttpError) {
+      if (NotFoundHttpError.isInstance(error)) {
         const otherIdentifier =
           { path: hasSlash ? trimTrailingSlashes(identifier.path) : ensureTrailingSlash(identifier.path) };
 
@@ -214,7 +216,7 @@ export class DataAccessorBasedStore implements ResourceStore {
     try {
       return await this.getNormalizedMetadata(identifier);
     } catch (error: unknown) {
-      if (!(error instanceof NotFoundHttpError)) {
+      if (!NotFoundHttpError.isInstance(error)) {
         throw error;
       }
     }
@@ -270,7 +272,7 @@ export class DataAccessorBasedStore implements ResourceStore {
         quads = await parseQuads(representation.data, { format: contentType, baseIRI: identifier.value });
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
+      if (isNativeError(error)) {
         throw new BadRequestHttpError(`Can only create containers with RDF data. ${error.message}`);
       }
       throw error;
@@ -354,8 +356,8 @@ export class DataAccessorBasedStore implements ResourceStore {
   /**
    * Checks in a list of types if any of them match a Container type.
    */
-  protected hasContainerType(types: Term[]): boolean {
-    return types.some((type): boolean => type.value === LDP.Container || type.value === LDP.BasicContainer);
+  protected hasContainerType(rdfTypes: Term[]): boolean {
+    return rdfTypes.some((type): boolean => type.value === LDP.Container || type.value === LDP.BasicContainer);
   }
 
   /**
@@ -382,7 +384,7 @@ export class DataAccessorBasedStore implements ResourceStore {
         throw new ForbiddenHttpError(`Creating container ${container.path} conflicts with an existing resource.`);
       }
     } catch (error: unknown) {
-      if (error instanceof NotFoundHttpError) {
+      if (NotFoundHttpError.isInstance(error)) {
         // Make sure the parent exists first
         await this.createRecursiveContainers(this.identifierStrategy.getParentContainer(container));
         await this.writeData(container, new BasicRepresentation([], container), true);

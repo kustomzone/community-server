@@ -1,3 +1,4 @@
+import { types } from 'util';
 import type { RequestParser } from '../ldp/http/RequestParser';
 import { CreatedResponseDescription } from '../ldp/http/response/CreatedResponseDescription';
 import type { ResponseWriter } from '../ldp/http/ResponseWriter';
@@ -9,6 +10,7 @@ import { InternalServerError } from '../util/errors/InternalServerError';
 import { NotImplementedHttpError } from '../util/errors/NotImplementedHttpError';
 import type { AgentParser } from './agent/AgentParser';
 import type { PodManager } from './PodManager';
+import isNativeError = types.isNativeError;
 
 export interface PodHttpHandlerArgs {
   /** The path on which this handler should intercept requests. Should start with a slash. */
@@ -59,7 +61,7 @@ export class PodManagerHttpHandler extends HttpHandler {
 
       await this.responseWriter.handleSafe({ response, result: new CreatedResponseDescription(id) });
     } catch (error: unknown) {
-      if (error instanceof Error) {
+      if (isNativeError(error)) {
         await this.responseWriter.handleSafe({ response, result: error });
       } else {
         await this.responseWriter.handleSafe({ response, result: new InternalServerError('Unexpected error') });

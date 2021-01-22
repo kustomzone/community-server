@@ -1,4 +1,5 @@
 import type { Readable } from 'stream';
+import { types } from 'util';
 import arrayifyStream from 'arrayify-stream';
 import { SparqlEndpointFetcher } from 'fetch-sparql-endpoint';
 import { DataFactory } from 'n3';
@@ -29,6 +30,7 @@ import type { IdentifierStrategy } from '../../util/identifiers/IdentifierStrate
 import { isContainerIdentifier } from '../../util/PathUtil';
 import { CONTENT_TYPE, LDP } from '../../util/Vocabularies';
 import type { DataAccessor } from './DataAccessor';
+import isNativeError = types.isNativeError;
 
 const { defaultGraph, namedNode, quad, variable } = DataFactory;
 
@@ -310,7 +312,7 @@ export class SparqlDataAccessor implements DataAccessor {
     try {
       return guardStream(await this.fetcher.fetchTriples(this.endpoint, query));
     } catch (error: unknown) {
-      if (error instanceof Error) {
+      if (isNativeError(error)) {
         this.logger.error(`SPARQL endpoint ${this.endpoint} error: ${error.message}`);
       }
       throw error;
@@ -327,7 +329,7 @@ export class SparqlDataAccessor implements DataAccessor {
     try {
       return await this.fetcher.fetchUpdate(this.endpoint, query);
     } catch (error: unknown) {
-      if (error instanceof Error) {
+      if (isNativeError(error)) {
         this.logger.error(`SPARQL endpoint ${this.endpoint} error: ${error.message}`);
       }
       throw error;

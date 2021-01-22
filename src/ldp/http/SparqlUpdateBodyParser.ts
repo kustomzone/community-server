@@ -1,4 +1,5 @@
 import { PassThrough } from 'stream';
+import { types } from 'util';
 import type { Algebra } from 'sparqlalgebrajs';
 import { translate } from 'sparqlalgebrajs';
 import { getLoggerFor } from '../../logging/LogUtil';
@@ -9,6 +10,7 @@ import { pipeSafely, readableToString } from '../../util/StreamUtil';
 import type { BodyParserArgs } from './BodyParser';
 import { BodyParser } from './BodyParser';
 import type { SparqlUpdatePatch } from './SparqlUpdatePatch';
+import isNativeError = types.isNativeError;
 
 /**
  * {@link BodyParser} that supports `application/sparql-update` content.
@@ -34,7 +36,7 @@ export class SparqlUpdateBodyParser extends BodyParser {
       algebra = translate(sparql, { quads: true, baseIRI: metadata.identifier.value });
     } catch (error: unknown) {
       this.logger.warn('Could not translate SPARQL query to SPARQL algebra', { error });
-      if (error instanceof Error) {
+      if (isNativeError(error)) {
         throw new BadRequestHttpError(error.message);
       }
       throw new BadRequestHttpError();

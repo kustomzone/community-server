@@ -1,3 +1,4 @@
+import { types } from 'util';
 import { getLoggerFor } from '../../logging/LogUtil';
 import type { HttpResponse } from '../../server/HttpResponse';
 import { INTERNAL_QUADS } from '../../util/ContentTypes';
@@ -6,6 +7,7 @@ import { pipeSafely } from '../../util/StreamUtil';
 import type { MetadataWriter } from './metadata/MetadataWriter';
 import type { ResponseDescription } from './response/ResponseDescription';
 import { ResponseWriter } from './ResponseWriter';
+import isNativeError = types.isNativeError;
 
 /**
  * Writes to an {@link HttpResponse} based on the incoming {@link ResponseDescription}.
@@ -20,7 +22,7 @@ export class BasicResponseWriter extends ResponseWriter {
   }
 
   public async canHandle(input: { response: HttpResponse; result: ResponseDescription | Error }): Promise<void> {
-    if (input.result instanceof Error || input.result.metadata?.contentType === INTERNAL_QUADS) {
+    if (isNativeError(input.result) || input.result.metadata?.contentType === INTERNAL_QUADS) {
       throw new NotImplementedHttpError('Only successful binary responses are supported');
     }
   }
